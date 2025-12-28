@@ -1,51 +1,44 @@
 #Requires -Version 5.1
 # ================================================
-# أبو حسن - المثبت الشامل
-# المطور: أبو حسن (Abo Hassan)
-# السنة: 2025
+# Abo Hassan - All-in-One Installer (TEST VERSION)
+# Created by: Abo Hassan (أبو حسن)
+# Year: 2025
 # ================================================
-# هذا السكربت يقوم بـ:
-#   1. تثبيت Millennium
-#   2. تثبيت Steamtools
-#   3. تثبيت إضافة Luatools
+# This script will:
+#   1. Install Millennium (force reinstall)
+#   2. Install Steamtools
+#   3. Install Luatools Plugin
 # ================================================
 
-# تفعيل دعم اللغة العربية
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
-chcp 65001 > $null
-
-# التحقق من صلاحيات المدير وإعادة التشغيل إذا لزم
+# Check for Admin privileges and restart if needed
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "جاري طلب صلاحيات المدير..." -ForegroundColor Yellow
-    Start-Process PowerShell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"chcp 65001 > `$null; iwr -useb 'https://raw.githubusercontent.com/MDQI1/Abo-hassan-fix/main/Abo-hassan-steam-fix.ps1' | iex`""
+    Write-Host "Requesting Administrator privileges..." -ForegroundColor Yellow
+    Start-Process PowerShell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
     exit
 }
 
 Clear-Host
 
-# تفعيل دعم اللغة العربية مرة أخرى بعد Clear
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-# الإعدادات
+# Configuration
 $pluginName = "luatools"
 $pluginLink = "https://github.com/madoiscool/ltsteamplugin/releases/latest/download/ltsteamplugin.zip"
 
-# إخفاء شريط التقدم
+# Hide progress bar
 $ProgressPreference = 'SilentlyContinue'
 
-# العنوان الرئيسي
+# Minimal header
 Write-Host ""
-Write-Host "  أبو حسن - المثبت الشامل" -ForegroundColor Cyan
-Write-Host "  ===================================" -ForegroundColor DarkGray
+Write-Host "  Abo Hassan - All-in-One Installer" -ForegroundColor Cyan
+Write-Host "  =================================== " -ForegroundColor DarkGray
+Write-Host "  [TEST VERSION]" -ForegroundColor Magenta
 Write-Host ""
-Write-Host "  سيتم تثبيت:" -ForegroundColor DarkGray
-Write-Host "    1. Millennium" -ForegroundColor DarkGray
+Write-Host "  This will install:" -ForegroundColor DarkGray
+Write-Host "    1. Millennium (force reinstall)" -ForegroundColor DarkGray
 Write-Host "    2. Steamtools" -ForegroundColor DarkGray
-Write-Host "    3. إضافة Luatools" -ForegroundColor DarkGray
+Write-Host "    3. Luatools Plugin" -ForegroundColor DarkGray
 Write-Host ""
 
-# دالة للحصول على مسار Steam
+# Function to get Steam path
 function Get-SteamPath {
     $steamPath = $null
     
@@ -71,40 +64,40 @@ function Get-SteamPath {
 }
 
 # ============================================
-# الخطوة 1: البحث عن Steam
+# STEP 1: Detect Steam
 # ============================================
-Write-Host "  [1/8] جاري البحث عن Steam..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [1/8] Detecting Steam..." -ForegroundColor Yellow -NoNewline
 $steamPath = Get-SteamPath
 
 if (-not $steamPath) {
-    Write-Host " فشل" -ForegroundColor Red
+    Write-Host " FAILED" -ForegroundColor Red
     Write-Host ""
-    Write-Host "  Steam غير موجود. الرجاء تثبيت Steam أولاً." -ForegroundColor Red
+    Write-Host "  Steam not found. Please install Steam first." -ForegroundColor Red
     Write-Host ""
-    Write-Host "  اضغط أي مفتاح للخروج..."
+    Write-Host "  Press any key to exit..."
     $null = $Host.UI.RawUI.ReadKey()
     exit 1
 }
 
 $steamExePath = Join-Path $steamPath "steam.exe"
 if (-not (Test-Path $steamExePath)) {
-    Write-Host " فشل" -ForegroundColor Red
+    Write-Host " FAILED" -ForegroundColor Red
     Write-Host ""
-    Write-Host "  steam.exe غير موجود." -ForegroundColor Red
+    Write-Host "  steam.exe not found." -ForegroundColor Red
     Write-Host ""
-    Write-Host "  اضغط أي مفتاح للخروج..."
+    Write-Host "  Press any key to exit..."
     $null = $Host.UI.RawUI.ReadKey()
     exit 1
 }
 
-Write-Host " تم" -ForegroundColor Green
-Write-Host "        المسار: $steamPath" -ForegroundColor DarkGray
+Write-Host " OK" -ForegroundColor Green
+Write-Host "        Path: $steamPath" -ForegroundColor DarkGray
 Write-Host ""
 
 # ============================================
-# الخطوة 2: إغلاق Steam
+# STEP 2: Close Steam
 # ============================================
-Write-Host "  [2/8] جاري إغلاق Steam..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [2/8] Closing Steam..." -ForegroundColor Yellow -NoNewline
 $steamProcesses = Get-Process -Name "steam*" -ErrorAction SilentlyContinue
 if ($steamProcesses) {
     $steamProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -115,85 +108,114 @@ if ($steamProcesses) {
         $remainingProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
     }
 }
-Write-Host " تم" -ForegroundColor Green
+Write-Host " OK" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
-# الخطوة 3: حذف steam.cfg (السماح بالتحديثات و Millennium)
+# STEP 3: Remove steam.cfg (allows updates & Millennium)
 # ============================================
-Write-Host "  [3/8] جاري حذف steam.cfg..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [3/8] Removing steam.cfg..." -ForegroundColor Yellow -NoNewline
 $steamCfgPath = Join-Path $steamPath "steam.cfg"
 
 if (Test-Path $steamCfgPath) {
     try {
         Remove-Item -Path $steamCfgPath -Force -ErrorAction Stop
-        Write-Host " تم" -ForegroundColor Green
-        Write-Host "        تم حذف مانع التحديثات" -ForegroundColor DarkGray
+        Write-Host " OK" -ForegroundColor Green
+        Write-Host "        Removed update blocker" -ForegroundColor DarkGray
     } catch {
-        Write-Host " فشل" -ForegroundColor Red
-        Write-Host "        الرجاء حذف steam.cfg يدوياً" -ForegroundColor DarkGray
+        Write-Host " FAILED" -ForegroundColor Red
+        Write-Host "        Please delete steam.cfg manually" -ForegroundColor DarkGray
     }
 } else {
-    Write-Host " تم" -ForegroundColor Green
-    Write-Host "        لا يوجد مانع تحديثات" -ForegroundColor DarkGray
+    Write-Host " OK" -ForegroundColor Green
+    Write-Host "        No blocker found" -ForegroundColor DarkGray
 }
 Write-Host ""
 
 # ============================================
-# الخطوة 4: تنظيف إعدادات Millennium (إصلاح JSON الخاطئ)
+# STEP 4: Remove old Millennium (force reinstall)
 # ============================================
-Write-Host "  [4/8] جاري تنظيف إعدادات Millennium..." -ForegroundColor Yellow -NoNewline
-$extConfigPath = Join-Path $steamPath "ext\config.json"
+Write-Host "  [4/8] Removing old Millennium..." -ForegroundColor Yellow -NoNewline
 
-if (Test-Path $extConfigPath) {
+$millenniumRemoved = $false
+$extPath = Join-Path $steamPath "ext"
+$user32Path = Join-Path $steamPath "user32.dll"
+$version32Path = Join-Path $steamPath "version.dll"
+
+# Remove ext folder
+if (Test-Path $extPath) {
     try {
-        Remove-Item -Path $extConfigPath -Force -ErrorAction Stop
-        Write-Host " تم" -ForegroundColor Green
-        Write-Host "        تم حذف الإعدادات التالفة" -ForegroundColor DarkGray
+        Remove-Item -Path $extPath -Recurse -Force -ErrorAction Stop
+        $millenniumRemoved = $true
     } catch {
-        Write-Host " فشل" -ForegroundColor Red
-        Write-Host "        الرجاء حذف ext\config.json يدوياً" -ForegroundColor DarkGray
+        Write-Host " PARTIAL" -ForegroundColor Yellow
+        Write-Host "        Could not remove ext folder" -ForegroundColor DarkGray
     }
+}
+
+# Remove user32.dll (Millennium loader)
+if (Test-Path $user32Path) {
+    try {
+        Remove-Item -Path $user32Path -Force -ErrorAction Stop
+        $millenniumRemoved = $true
+    } catch {
+        # Ignore if can't delete
+    }
+}
+
+# Remove version.dll (alternative loader)
+if (Test-Path $version32Path) {
+    try {
+        Remove-Item -Path $version32Path -Force -ErrorAction Stop
+        $millenniumRemoved = $true
+    } catch {
+        # Ignore if can't delete
+    }
+}
+
+if ($millenniumRemoved) {
+    Write-Host " OK" -ForegroundColor Green
+    Write-Host "        Old Millennium removed" -ForegroundColor DarkGray
 } else {
-    Write-Host " تم" -ForegroundColor Green
-    Write-Host "        لا توجد إعدادات للتنظيف" -ForegroundColor DarkGray
+    Write-Host " OK" -ForegroundColor Green
+    Write-Host "        No old installation found" -ForegroundColor DarkGray
 }
 Write-Host ""
 
 # ============================================
-# الخطوة 5: تثبيت Millennium
+# STEP 5: Install Millennium (fresh install)
 # ============================================
-Write-Host "  [5/8] جاري تثبيت Millennium..." -ForegroundColor Yellow
-Write-Host "        انتظر قليلاً، جاري التحميل من steambrew.app..." -ForegroundColor DarkGray
+Write-Host "  [5/8] Installing Millennium..." -ForegroundColor Yellow
+Write-Host "        Please wait, downloading from steambrew.app..." -ForegroundColor DarkGray
 Write-Host ""
 
 try {
     & { Invoke-Expression (Invoke-WebRequest 'https://steambrew.app/install.ps1' -UseBasicParsing).Content }
     Write-Host ""
-    Write-Host "        تم تثبيت Millennium!" -ForegroundColor Green
+    Write-Host "        Millennium installed!" -ForegroundColor Green
 } catch {
-    Write-Host "        فشل تثبيت Millennium!" -ForegroundColor Red
-    Write-Host "        الخطأ: $_" -ForegroundColor DarkGray
+    Write-Host "        Millennium installation failed!" -ForegroundColor Red
+    Write-Host "        Error: $_" -ForegroundColor DarkGray
 }
 Write-Host ""
 
 # ============================================
-# الخطوة 6: تثبيت Steamtools
+# STEP 6: Install Steamtools
 # ============================================
-Write-Host "  [6/8] جاري التحقق من Steamtools..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [6/8] Checking Steamtools..." -ForegroundColor Yellow -NoNewline
 $steamtoolsPath = Join-Path $steamPath "xinput1_4.dll"
 
 if (Test-Path $steamtoolsPath) {
-    Write-Host " مثبت مسبقاً" -ForegroundColor Green
+    Write-Host " Already Installed" -ForegroundColor Green
     Write-Host ""
 } else {
-    Write-Host " غير موجود" -ForegroundColor Yellow
+    Write-Host " Not Found" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  [6/8] جاري تثبيت Steamtools..." -ForegroundColor Yellow
-    Write-Host "        انتظر قليلاً..." -ForegroundColor DarkGray
+    Write-Host "  [6/8] Installing Steamtools..." -ForegroundColor Yellow
+    Write-Host "        Please wait..." -ForegroundColor DarkGray
     
     try {
-        # تحميل وتصفية سكربت التثبيت
+        # Get and filter the installation script
         $script = Invoke-RestMethod "https://steam.run"
         $keptLines = @()
 
@@ -215,23 +237,23 @@ if (Test-Path $steamtoolsPath) {
         Invoke-Expression $SteamtoolsScript *> $null
 
         if (Test-Path $steamtoolsPath) {
-            Write-Host "        تم تثبيت Steamtools!" -ForegroundColor Green
+            Write-Host "        Steamtools installed!" -ForegroundColor Green
         } else {
-            Write-Host "        فشل تثبيت Steamtools!" -ForegroundColor Red
+            Write-Host "        Steamtools installation failed!" -ForegroundColor Red
         }
     } catch {
-        Write-Host "        فشل تثبيت Steamtools!" -ForegroundColor Red
-        Write-Host "        الخطأ: $_" -ForegroundColor DarkGray
+        Write-Host "        Steamtools installation failed!" -ForegroundColor Red
+        Write-Host "        Error: $_" -ForegroundColor DarkGray
     }
     Write-Host ""
 }
 
 # ============================================
-# الخطوة 7: تثبيت الإضافة
+# STEP 7: Install Plugin
 # ============================================
-Write-Host "  [7/8] جاري تثبيت إضافة $pluginName..." -ForegroundColor Yellow
+Write-Host "  [7/8] Installing $pluginName plugin..." -ForegroundColor Yellow
 
-# التأكد من وجود مجلد الإضافات
+# Ensure plugins folder exists
 $pluginsFolder = Join-Path $steamPath "plugins"
 if (-not (Test-Path $pluginsFolder)) {
     New-Item -Path $pluginsFolder -ItemType Directory *> $null
@@ -239,58 +261,58 @@ if (-not (Test-Path $pluginsFolder)) {
 
 $pluginPath = Join-Path $pluginsFolder $pluginName
 
-# التحقق من وجود الإضافة مسبقاً
+# Check if plugin already exists
 foreach ($plugin in Get-ChildItem -Path $pluginsFolder -Directory -ErrorAction SilentlyContinue) {
     $jsonPath = Join-Path $plugin.FullName "plugin.json"
     if (Test-Path $jsonPath) {
         $json = Get-Content $jsonPath -Raw | ConvertFrom-Json
         if ($json.name -eq $pluginName) {
-            Write-Host "        الإضافة موجودة، جاري التحديث..." -ForegroundColor DarkGray
+            Write-Host "        Plugin found, updating..." -ForegroundColor DarkGray
             $pluginPath = $plugin.FullName
             break
         }
     }
 }
 
-# تحميل وتثبيت الإضافة
+# Download and install plugin
 $tempZip = Join-Path $env:TEMP "$pluginName.zip"
 
 try {
-    Write-Host "        جاري تحميل $pluginName..." -ForegroundColor DarkGray
+    Write-Host "        Downloading $pluginName..." -ForegroundColor DarkGray
     Invoke-WebRequest -Uri $pluginLink -OutFile $tempZip *> $null
     
-    Write-Host "        جاري فك الضغط $pluginName..." -ForegroundColor DarkGray
+    Write-Host "        Extracting $pluginName..." -ForegroundColor DarkGray
     Expand-Archive -Path $tempZip -DestinationPath $pluginPath -Force *> $null
     Remove-Item $tempZip -ErrorAction SilentlyContinue
     
-    Write-Host "  [7/8] تم تثبيت الإضافة!" -ForegroundColor Green
+    Write-Host "  [7/8] Plugin installed!" -ForegroundColor Green
 } catch {
-    Write-Host "  [7/8] فشل تثبيت الإضافة!" -ForegroundColor Red
-    Write-Host "        الخطأ: $_" -ForegroundColor DarkGray
+    Write-Host "  [7/8] Plugin installation failed!" -ForegroundColor Red
+    Write-Host "        Error: $_" -ForegroundColor DarkGray
 }
 Write-Host ""
 
 # ============================================
-# الخطوة 8: تشغيل Steam
+# STEP 8: Launch Steam
 # ============================================
-Write-Host "  [8/8] جاري تشغيل Steam..." -ForegroundColor Yellow -NoNewline
-Write-Host " تم" -ForegroundColor Green
+Write-Host "  [8/8] Launching Steam..." -ForegroundColor Yellow -NoNewline
+Write-Host " OK" -ForegroundColor Green
 Write-Host ""
 
-# رسالة النجاح
+# Success message
 Write-Host "  ===================================" -ForegroundColor DarkGray
-Write-Host "  اكتمل التثبيت!" -ForegroundColor Green
+Write-Host "  Installation Complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "  ملاحظة: أول تشغيل لـ Steam سيكون أبطأ." -ForegroundColor Yellow
-Write-Host "  لا تقلق وانتظر حتى يتم تحميل Steam!" -ForegroundColor DarkGray
+Write-Host "  Note: First Steam startup will be slower." -ForegroundColor Yellow
+Write-Host "  Don't panic and wait for Steam to load!" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  اضغط أي مفتاح لتشغيل Steam..."
+Write-Host "  Press any key to launch Steam..."
 $null = $Host.UI.RawUI.ReadKey()
 
-# تشغيل Steam وتفعيل الإضافة
+# Launch Steam and enable plugin
 Start-Process "steam://millennium/settings/plugins/enable/$pluginName"
 
 Write-Host ""
-Write-Host "  تم! Steam يعمل الآن مع Millennium." -ForegroundColor Green
-Write-Host "  اضغط أي مفتاح للخروج..."
+Write-Host "  Done! Steam is starting with Millennium." -ForegroundColor Green
+Write-Host "  Press any key to exit..."
 $null = $Host.UI.RawUI.ReadKey()
