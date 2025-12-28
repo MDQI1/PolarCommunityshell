@@ -148,9 +148,11 @@ if ($millenniumInstalled) {
     Write-Host ""
     Write-Host "  [4/7] Installing Millennium..." -ForegroundColor Yellow
     Write-Host "        Please wait, downloading from steambrew.app..." -ForegroundColor DarkGray
+    Write-Host ""
     
     try {
-        & { Invoke-Expression (Invoke-WebRequest 'https://steambrew.app/install.ps1' -UseBasicParsing).Content } *> $null
+        & { Invoke-Expression (Invoke-WebRequest 'https://steambrew.app/install.ps1' -UseBasicParsing).Content }
+        Write-Host ""
         Write-Host "        Millennium installed!" -ForegroundColor Green
     } catch {
         Write-Host "        Millennium installation failed!" -ForegroundColor Red
@@ -266,8 +268,25 @@ Write-Host ""
 Write-Host "  Note: First Steam startup will be slower." -ForegroundColor Yellow
 Write-Host "  Don't panic and wait for Steam to load!" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  Press any key to launch Steam and enable plugin..."
+Write-Host "  Press any key to launch Steam..."
 $null = $Host.UI.RawUI.ReadKey()
 
-# Launch Steam and enable plugin
+# Launch Steam normally first
+Start-Process -FilePath $steamExePath
+
+Write-Host ""
+Write-Host "  Waiting for Steam to initialize Millennium..." -ForegroundColor Yellow
+Write-Host "  (This may take 30-60 seconds on first run)" -ForegroundColor DarkGray
+Write-Host ""
+
+# Wait for Steam to fully load
+Start-Sleep -Seconds 30
+
+# Now enable the plugin
+Write-Host "  Enabling $pluginName plugin..." -ForegroundColor Yellow
 Start-Process "steam://millennium/settings/plugins/enable/$pluginName"
+
+Write-Host ""
+Write-Host "  Done! If plugin doesn't appear, restart Steam manually." -ForegroundColor Green
+Write-Host "  Press any key to exit..."
+$null = $Host.UI.RawUI.ReadKey()
