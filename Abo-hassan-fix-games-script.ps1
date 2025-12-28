@@ -106,7 +106,7 @@ Write-Host ""
 # ============================================
 # STEP 3: Remove steam.cfg (allows updates & Millennium)
 # ============================================
-Write-Host "  [3/7] Removing steam.cfg..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [3/8] Removing steam.cfg..." -ForegroundColor Yellow -NoNewline
 $steamCfgPath = Join-Path $steamPath "steam.cfg"
 
 if (Test-Path $steamCfgPath) {
@@ -125,9 +125,34 @@ if (Test-Path $steamCfgPath) {
 Write-Host ""
 
 # ============================================
-# STEP 4: Install Millennium
+# STEP 4: Update Steam First
 # ============================================
-Write-Host "  [4/7] Installing Millennium..." -ForegroundColor Yellow
+Write-Host "  [4/8] Updating Steam..." -ForegroundColor Yellow
+Write-Host "        Launching Steam to check for updates..." -ForegroundColor DarkGray
+
+Start-Process -FilePath $steamExePath
+Write-Host "        Waiting for Steam to update (60 seconds)..." -ForegroundColor DarkGray
+
+# Wait for Steam to update
+for ($i = 60; $i -gt 0; $i -= 10) {
+    Write-Host "        $i seconds remaining..." -ForegroundColor DarkGray
+    Start-Sleep -Seconds 10
+}
+
+# Close Steam after update
+Write-Host "        Closing Steam..." -ForegroundColor DarkGray
+$steamProcesses = Get-Process -Name "steam*" -ErrorAction SilentlyContinue
+if ($steamProcesses) {
+    $steamProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 3
+}
+Write-Host "  [4/8] Steam updated!" -ForegroundColor Green
+Write-Host ""
+
+# ============================================
+# STEP 5: Install Millennium
+# ============================================
+Write-Host "  [5/8] Installing Millennium..." -ForegroundColor Yellow
 Write-Host "        Please wait, downloading from steambrew.app..." -ForegroundColor DarkGray
 Write-Host ""
 
@@ -142,9 +167,9 @@ try {
 Write-Host ""
 
 # ============================================
-# STEP 5: Check Steamtools
+# STEP 6: Check Steamtools
 # ============================================
-Write-Host "  [5/7] Checking Steamtools..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [6/8] Checking Steamtools..." -ForegroundColor Yellow -NoNewline
 $steamtoolsPath = Join-Path $steamPath "xinput1_4.dll"
 
 if (Test-Path $steamtoolsPath) {
@@ -153,7 +178,7 @@ if (Test-Path $steamtoolsPath) {
 } else {
     Write-Host " Not Found" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "  [5/7] Installing Steamtools..." -ForegroundColor Yellow
+    Write-Host "  [6/8] Installing Steamtools..." -ForegroundColor Yellow
     Write-Host "        Please wait..." -ForegroundColor DarkGray
     
     try {
@@ -191,9 +216,9 @@ if (Test-Path $steamtoolsPath) {
 }
 
 # ============================================
-# STEP 6: Install Plugin
+# STEP 7: Install Plugin
 # ============================================
-Write-Host "  [6/7] Installing $pluginName plugin..." -ForegroundColor Yellow
+Write-Host "  [7/8] Installing $pluginName plugin..." -ForegroundColor Yellow
 
 # Ensure plugins folder exists
 $pluginsFolder = Join-Path $steamPath "plugins"
@@ -227,17 +252,17 @@ try {
     Expand-Archive -Path $tempZip -DestinationPath $pluginPath -Force *> $null
     Remove-Item $tempZip -ErrorAction SilentlyContinue
     
-    Write-Host "  [6/7] Plugin installed!" -ForegroundColor Green
+    Write-Host "  [7/8] Plugin installed!" -ForegroundColor Green
 } catch {
-    Write-Host "  [6/7] Plugin installation failed!" -ForegroundColor Red
+    Write-Host "  [7/8] Plugin installation failed!" -ForegroundColor Red
     Write-Host "        Error: $_" -ForegroundColor DarkGray
 }
 Write-Host ""
 
 # ============================================
-# STEP 7: Launch Steam
+# STEP 8: Launch Steam
 # ============================================
-Write-Host "  [7/7] Launching Steam..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [8/8] Launching Steam..." -ForegroundColor Yellow -NoNewline
 Write-Host " OK" -ForegroundColor Green
 Write-Host ""
 
