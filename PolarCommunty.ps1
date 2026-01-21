@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 # ================================================
-# PolarCommuity  - All-in-One Installer (PolarCommunity)
+# Polar Commuity  - All-in-One Installer (PolarCommunity)
 # Created by: PolarCommunity
 # Year: 2025
 # ================================================
@@ -17,7 +17,7 @@ chcp 65001 | Out-Null
 $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 # Download script to temp for admin restart
-$tempScriptPath = Join-Path $env:TEMP "abo-hassan-installer-polar.ps1"
+$tempScriptPath = Join-Path $env:TEMP "polar-Community.ps1"
 if ($PSCommandPath) {
     Copy-Item -Path $PSCommandPath -Destination $tempScriptPath -Force -ErrorAction SilentlyContinue
 }
@@ -35,6 +35,7 @@ Clear-Host
 # Configuration
 $pluginName = "PolarTools"
 $pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/1.5.6/PolarTools_v1.5.6.zip"
+$steamToolsLink = "https://www.steamtools.net/res/st-setup-1.8.30.exe"
 $oldPluginNames = @("luatools", "manilua", "stelenium", "PolarTools")  # Old plugin names to remove
 
 # Hide progress bar for faster downloads
@@ -50,6 +51,7 @@ Write-Host "               Version 2.0                 " -ForegroundColor Cyan
 Write-Host "  =========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  This will install:" -ForegroundColor DarkGray
+Write-Host "    - SteamTools" -ForegroundColor DarkGray
 Write-Host "    - Millennium (Steam modding framework)" -ForegroundColor DarkGray
 Write-Host "    - PolarTools Plugin" -ForegroundColor DarkGray
 Write-Host ""
@@ -57,7 +59,7 @@ Write-Host ""
 # ============================================
 # STEP 1: Detect Steam Path
 # ============================================
-Write-Host "  [1/9] Detecting Steam..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [1/10] Detecting Steam..." -ForegroundColor Yellow -NoNewline
 $steamPath = $null
 
 # Try multiple registry locations
@@ -101,7 +103,7 @@ Write-Host ""
 # ============================================
 # STEP 2: Add Steam to Windows Defender Exclusions
 # ============================================
-Write-Host "  [2/9] Windows Defender exclusions..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [2/10] Windows Defender exclusions..." -ForegroundColor Yellow -NoNewline
 try {
     $defenderPreferences = Get-MpPreference -ErrorAction SilentlyContinue
     $exclusions = $defenderPreferences.ExclusionPath
@@ -123,7 +125,7 @@ Write-Host ""
 # ============================================
 # STEP 3: Close Steam
 # ============================================
-Write-Host "  [3/9] Closing Steam..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [3/10] Closing Steam..." -ForegroundColor Yellow -NoNewline
 $steamProcesses = Get-Process -Name "steam*" -ErrorAction SilentlyContinue
 if ($steamProcesses) {
     $steamProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -137,7 +139,7 @@ Write-Host ""
 # ============================================
 # STEP 4: Remove steam.cfg (update blocker)
 # ============================================
-Write-Host "  [4/9] Removing steam.cfg..." -ForegroundColor Yellow -NoNewline
+Write-Host "  [4/10] Removing steam.cfg..." -ForegroundColor Yellow -NoNewline
 $steamCfgPath = Join-Path $steamPath "steam.cfg"
 
 if (Test-Path $steamCfgPath) {
@@ -153,7 +155,7 @@ Write-Host ""
 # ============================================
 # STEP 5: Clean old installations
 # ============================================
-Write-Host "  [5/9] Cleaning old installations..." -ForegroundColor Yellow
+Write-Host "  [5/10] Cleaning old installations..." -ForegroundColor Yellow
 
 # Remove old Steamtools files
 $steamtoolsFiles = @(
@@ -214,9 +216,65 @@ Write-Host "        Cleanup complete!" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
-# STEP 6: Install Millennium
+# STEP 6: Install SteamTools
 # ============================================
-Write-Host "  [6/9] Installing Millennium..." -ForegroundColor Yellow
+Write-Host "  [6/10] Installing SteamTools..." -ForegroundColor Yellow
+
+$steamToolsPath = Join-Path $env:USERPROFILE "Downloads\st-setup-1.8.30.exe"
+$steamToolsDownloaded = $false
+
+# Check if already downloaded
+if (Test-Path $steamToolsPath) {
+    $steamToolsDownloaded = $true
+    Write-Host "        Found in Downloads folder!" -ForegroundColor Green
+} else {
+    # Open browser to download (Cloudflare protected site)
+    Write-Host ""
+    Write-Host "        =============================================" -ForegroundColor Magenta
+    Write-Host "          Browser will open to download SteamTools " -ForegroundColor Magenta
+    Write-Host "          1. Wait for download to complete         " -ForegroundColor Magenta
+    Write-Host "          2. Press any key here when done          " -ForegroundColor Magenta
+    Write-Host "        =============================================" -ForegroundColor Magenta
+    Write-Host ""
+    
+    Start-Process "https://www.steamtools.net/res/st-setup-1.8.30.exe"
+    
+    Write-Host "        >>> Press any key AFTER download completes <<<" -ForegroundColor Cyan
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+    
+    # Check again after download
+    if (Test-Path $steamToolsPath) {
+        $steamToolsDownloaded = $true
+    }
+}
+
+if ($steamToolsDownloaded -and (Test-Path $steamToolsPath)) {
+    Write-Host ""
+    Write-Host "        =============================================" -ForegroundColor Magenta
+    Write-Host "          SteamTools installer will open now!     " -ForegroundColor Magenta
+    Write-Host "          1. Follow the installation steps        " -ForegroundColor Magenta
+    Write-Host "          2. Wait for installation to complete    " -ForegroundColor Magenta
+    Write-Host "          3. Close the installer window           " -ForegroundColor Magenta
+    Write-Host "        =============================================" -ForegroundColor Magenta
+    Write-Host ""
+    
+    $process = Start-Process -FilePath $steamToolsPath -PassThru
+    
+    Write-Host "        Waiting for installer to close..." -ForegroundColor Yellow
+    
+    $process.WaitForExit()
+    Start-Sleep -Seconds 2
+    
+    Write-Host "        SteamTools installed!" -ForegroundColor Green
+} else {
+    Write-Host "        SteamTools not found. Please install manually later." -ForegroundColor Yellow
+}
+Write-Host ""
+
+# ============================================
+# STEP 7: Install Millennium
+# ============================================
+Write-Host "  [7/10] Installing Millennium..." -ForegroundColor Yellow
 Write-Host "        Downloading from GitHub..." -ForegroundColor DarkGray
 
 try {
@@ -229,13 +287,30 @@ try {
         Write-Host ""
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host "          Millennium installer will open now!      " -ForegroundColor Magenta
-        Write-Host "          Click 'Install' and wait for it to       " -ForegroundColor Magenta
-        Write-Host "          finish, then close the installer.        " -ForegroundColor Magenta
+        Write-Host "          1. Click 'Install' in the installer      " -ForegroundColor Magenta
+        Write-Host "          2. Wait for installation to complete     " -ForegroundColor Magenta
+        Write-Host "          3. The script will continue automatically" -ForegroundColor Magenta
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host ""
         
-        # Run installer and wait
-        $process = Start-Process -FilePath $installerPath -PassThru -Wait
+        # Run installer and wait for it to exit
+        $process = Start-Process -FilePath $installerPath -PassThru
+        
+        Write-Host "        Waiting for installer to close..." -ForegroundColor Yellow
+        
+        # Wait for the main installer process to exit
+        $process.WaitForExit()
+        
+        # Wait a bit more for any child processes
+        Start-Sleep -Seconds 3
+        
+        # Check for any remaining Millennium installer processes
+        $remainingProcesses = Get-Process | Where-Object { $_.Path -like "*Millennium*" } -ErrorAction SilentlyContinue
+        if ($remainingProcesses) {
+            Write-Host "        Waiting for installer to finish..." -ForegroundColor Yellow
+            $remainingProcesses | Wait-Process -Timeout 120 -ErrorAction SilentlyContinue
+        }
+        
         Remove-Item $installerPath -ErrorAction SilentlyContinue
         
         # Verify installation
@@ -252,9 +327,9 @@ try {
 Write-Host ""
 
 # ============================================
-# STEP 7: Install PolarTools Plugin
+# STEP 8: Install PolarTools Plugin
 # ============================================
-Write-Host "  [7/9] Installing $pluginName plugin..." -ForegroundColor Yellow
+Write-Host "  [8/10] Installing $pluginName plugin..." -ForegroundColor Yellow
 
 # Ensure plugins folder exists
 $pluginsFolder = Join-Path $steamPath "plugins"
@@ -264,6 +339,7 @@ if (-not (Test-Path $pluginsFolder)) {
 
 $pluginPath = Join-Path $pluginsFolder $pluginName
 $tempZip = Join-Path $env:TEMP "$pluginName.zip"
+$tempExtract = Join-Path $env:TEMP "$pluginName-extract"
 
 try {
     Write-Host "        Downloading $pluginName..." -ForegroundColor DarkGray
@@ -276,8 +352,28 @@ try {
         Remove-Item $pluginPath -Recurse -Force -ErrorAction SilentlyContinue
     }
     
-    Expand-Archive -Path $tempZip -DestinationPath $pluginPath -Force
+    # Remove temp extract folder if exists
+    if (Test-Path $tempExtract) {
+        Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
+    # Extract to temp folder first
+    Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
+    
+    # Check if there's a nested folder inside (like PolarTools inside the zip)
+    $extractedItems = Get-ChildItem -Path $tempExtract -Force
+    if ($extractedItems.Count -eq 1 -and $extractedItems[0].PSIsContainer) {
+        # Single folder inside - move its contents to the plugin path
+        $innerFolder = $extractedItems[0].FullName
+        Move-Item -Path $innerFolder -Destination $pluginPath -Force
+    } else {
+        # Multiple items or files - move the whole temp folder
+        Move-Item -Path $tempExtract -Destination $pluginPath -Force
+    }
+    
+    # Cleanup
     Remove-Item $tempZip -ErrorAction SilentlyContinue
+    Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
     
     Write-Host "        Plugin installed!" -ForegroundColor Green
 } catch {
@@ -286,9 +382,9 @@ try {
 Write-Host ""
 
 # ============================================
-# STEP 8: Clean Steam Cache
+# STEP 9: Clean Steam Cache
 # ============================================
-Write-Host "  [8/9] Cleaning Steam cache..." -ForegroundColor Yellow
+Write-Host "  [9/10] Cleaning Steam cache..." -ForegroundColor Yellow
 
 $backupPath = Join-Path $steamPath "cache-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 New-Item -ItemType Directory -Path $backupPath -Force | Out-Null
@@ -330,22 +426,46 @@ Write-Host "        Cache cleaned! (Backup: $backupPath)" -ForegroundColor Green
 Write-Host ""
 
 # ============================================
-# STEP 9: Launch Steam & Enable Plugin
+# STEP 10: Launch Steam & Enable Plugin
 # ============================================
-Write-Host "  [9/9] Starting Steam..." -ForegroundColor Yellow
-Write-Host "        Launching with -dev -clearbeta flags..." -ForegroundColor DarkGray
+Write-Host "  [10/10] Starting Steam & Enabling Plugin..." -ForegroundColor Yellow
 
+# Enable plugin by modifying Millennium config file BEFORE launching Steam
+$millenniumConfigPath = Join-Path $steamPath "ext\config.json"
+if (Test-Path $millenniumConfigPath) {
+    try {
+        $config = Get-Content $millenniumConfigPath -Raw | ConvertFrom-Json
+        
+        # Initialize plugins object if not exists
+        if (-not $config.PSObject.Properties['plugins']) {
+            $config | Add-Member -NotePropertyName 'plugins' -NotePropertyValue @{} -Force
+        }
+        
+        # Enable plugin using the correct name from plugin.json ("PolarCommunity")
+        $config.plugins | Add-Member -NotePropertyName 'PolarCommunity' -NotePropertyValue $true -Force
+        
+        # Save config
+        $config | ConvertTo-Json -Depth 10 | Set-Content $millenniumConfigPath -Encoding UTF8
+        Write-Host "        Plugin enabled in config!" -ForegroundColor Green
+    } catch {
+        Write-Host "        Could not modify config file: $_" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "        Config file not found, will enable via URI..." -ForegroundColor Yellow
+}
+
+Write-Host "        Launching Steam..." -ForegroundColor DarkGray
 Start-Process -FilePath $steamExePath -ArgumentList "-clearbeta -dev"
 
-Write-Host "        Waiting for Steam to load (18 seconds)..." -ForegroundColor DarkGray
-Start-Sleep -Seconds 18
+Write-Host "        Waiting for Steam to load (15 seconds)..." -ForegroundColor DarkGray
+Start-Sleep -Seconds 15
 
-Write-Host "        Enabling $pluginName plugin..." -ForegroundColor DarkGray
-Start-Process "steam://millennium/settings/plugins/enable/$pluginName"
+# Also try the URI method as backup with correct plugin name
+Write-Host "        Enabling plugin via Millennium..." -ForegroundColor DarkGray
+Start-Process "steam://millennium/settings/plugins/enable/PolarCommunity" -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 5
 
-Start-Sleep -Seconds 12
-
-Write-Host "        Restarting Steam without -dev..." -ForegroundColor DarkGray
+Write-Host "        Restarting Steam..." -ForegroundColor DarkGray
 Get-Process -Name "steam*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
