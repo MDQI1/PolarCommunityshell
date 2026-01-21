@@ -1,6 +1,6 @@
 #Requires -Version 5.1
 # ================================================
-# Polar Commuity  - All-in-One Installer (PolarCommunity)
+# PolarCommuity  - All-in-One Installer (PolarCommunity)
 # Created by: PolarCommunity
 # Year: 2025
 # ================================================
@@ -17,7 +17,7 @@ chcp 65001 | Out-Null
 $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 # Download script to temp for admin restart
-$tempScriptPath = Join-Path $env:TEMP "polar-Community.ps1"
+$tempScriptPath = Join-Path $env:TEMP "abo-hassan-installer-polar.ps1"
 if ($PSCommandPath) {
     Copy-Item -Path $PSCommandPath -Destination $tempScriptPath -Force -ErrorAction SilentlyContinue
 }
@@ -229,30 +229,13 @@ try {
         Write-Host ""
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host "          Millennium installer will open now!      " -ForegroundColor Magenta
-        Write-Host "          1. Click 'Install' in the installer      " -ForegroundColor Magenta
-        Write-Host "          2. Wait for installation to complete     " -ForegroundColor Magenta
-        Write-Host "          3. The script will continue automatically" -ForegroundColor Magenta
+        Write-Host "          Click 'Install' and wait for it to       " -ForegroundColor Magenta
+        Write-Host "          finish, then close the installer.        " -ForegroundColor Magenta
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host ""
         
-        # Run installer and wait for it to exit
-        $process = Start-Process -FilePath $installerPath -PassThru
-        
-        Write-Host "        Waiting for installer to close..." -ForegroundColor Yellow
-        
-        # Wait for the main installer process to exit
-        $process.WaitForExit()
-        
-        # Wait a bit more for any child processes
-        Start-Sleep -Seconds 3
-        
-        # Check for any remaining Millennium installer processes
-        $remainingProcesses = Get-Process | Where-Object { $_.Path -like "*Millennium*" } -ErrorAction SilentlyContinue
-        if ($remainingProcesses) {
-            Write-Host "        Waiting for installer to finish..." -ForegroundColor Yellow
-            $remainingProcesses | Wait-Process -Timeout 120 -ErrorAction SilentlyContinue
-        }
-        
+        # Run installer and wait
+        $process = Start-Process -FilePath $installerPath -PassThru -Wait
         Remove-Item $installerPath -ErrorAction SilentlyContinue
         
         # Verify installation
@@ -281,7 +264,6 @@ if (-not (Test-Path $pluginsFolder)) {
 
 $pluginPath = Join-Path $pluginsFolder $pluginName
 $tempZip = Join-Path $env:TEMP "$pluginName.zip"
-$tempExtract = Join-Path $env:TEMP "$pluginName-extract"
 
 try {
     Write-Host "        Downloading $pluginName..." -ForegroundColor DarkGray
@@ -294,28 +276,8 @@ try {
         Remove-Item $pluginPath -Recurse -Force -ErrorAction SilentlyContinue
     }
     
-    # Remove temp extract folder if exists
-    if (Test-Path $tempExtract) {
-        Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    
-    # Extract to temp folder first
-    Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
-    
-    # Check if there's a nested folder inside (like PolarTools inside the zip)
-    $extractedItems = Get-ChildItem -Path $tempExtract -Force
-    if ($extractedItems.Count -eq 1 -and $extractedItems[0].PSIsContainer) {
-        # Single folder inside - move its contents to the plugin path
-        $innerFolder = $extractedItems[0].FullName
-        Move-Item -Path $innerFolder -Destination $pluginPath -Force
-    } else {
-        # Multiple items or files - move the whole temp folder
-        Move-Item -Path $tempExtract -Destination $pluginPath -Force
-    }
-    
-    # Cleanup
+    Expand-Archive -Path $tempZip -DestinationPath $pluginPath -Force
     Remove-Item $tempZip -ErrorAction SilentlyContinue
-    Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
     
     Write-Host "        Plugin installed!" -ForegroundColor Green
 } catch {
@@ -370,44 +332,20 @@ Write-Host ""
 # ============================================
 # STEP 9: Launch Steam & Enable Plugin
 # ============================================
-Write-Host "  [9/9] Starting Steam & Enabling Plugin..." -ForegroundColor Yellow
+Write-Host "  [9/9] Starting Steam..." -ForegroundColor Yellow
+Write-Host "        Launching with -dev -clearbeta flags..." -ForegroundColor DarkGray
 
-# Enable plugin by modifying Millennium config file BEFORE launching Steam
-$millenniumConfigPath = Join-Path $steamPath "ext\config.json"
-if (Test-Path $millenniumConfigPath) {
-    try {
-        $config = Get-Content $millenniumConfigPath -Raw | ConvertFrom-Json
-        
-        # Initialize plugins object if not exists
-        if (-not $config.PSObject.Properties['plugins']) {
-            $config | Add-Member -NotePropertyName 'plugins' -NotePropertyValue @{} -Force
-        }
-        
-        # Enable plugin using the correct name from plugin.json ("PolarCommunity")
-        $config.plugins | Add-Member -NotePropertyName 'PolarCommunity' -NotePropertyValue $true -Force
-        
-        # Save config
-        $config | ConvertTo-Json -Depth 10 | Set-Content $millenniumConfigPath -Encoding UTF8
-        Write-Host "        Plugin enabled in config!" -ForegroundColor Green
-    } catch {
-        Write-Host "        Could not modify config file: $_" -ForegroundColor Yellow
-    }
-} else {
-    Write-Host "        Config file not found, will enable via URI..." -ForegroundColor Yellow
-}
-
-Write-Host "        Launching Steam..." -ForegroundColor DarkGray
 Start-Process -FilePath $steamExePath -ArgumentList "-clearbeta -dev"
 
-Write-Host "        Waiting for Steam to load (15 seconds)..." -ForegroundColor DarkGray
-Start-Sleep -Seconds 15
+Write-Host "        Waiting for Steam to load (18 seconds)..." -ForegroundColor DarkGray
+Start-Sleep -Seconds 18
 
-# Also try the URI method as backup with correct plugin name
-Write-Host "        Enabling plugin via Millennium..." -ForegroundColor DarkGray
-Start-Process "steam://millennium/settings/plugins/enable/PolarCommunity" -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 5
+Write-Host "        Enabling $pluginName plugin..." -ForegroundColor DarkGray
+Start-Process "steam://millennium/settings/plugins/enable/$pluginName"
 
-Write-Host "        Restarting Steam..." -ForegroundColor DarkGray
+Start-Sleep -Seconds 12
+
+Write-Host "        Restarting Steam without -dev..." -ForegroundColor DarkGray
 Get-Process -Name "steam*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
