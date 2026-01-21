@@ -229,13 +229,30 @@ try {
         Write-Host ""
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host "          Millennium installer will open now!      " -ForegroundColor Magenta
-        Write-Host "          Click 'Install' and wait for it to       " -ForegroundColor Magenta
-        Write-Host "          finish, then close the installer.        " -ForegroundColor Magenta
+        Write-Host "          1. Click 'Install' in the installer      " -ForegroundColor Magenta
+        Write-Host "          2. Wait for installation to complete     " -ForegroundColor Magenta
+        Write-Host "          3. The script will continue automatically" -ForegroundColor Magenta
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host ""
         
-        # Run installer and wait
-        $process = Start-Process -FilePath $installerPath -PassThru -Wait
+        # Run installer and wait for it to exit
+        $process = Start-Process -FilePath $installerPath -PassThru
+        
+        Write-Host "        Waiting for installer to close..." -ForegroundColor Yellow
+        
+        # Wait for the main installer process to exit
+        $process.WaitForExit()
+        
+        # Wait a bit more for any child processes
+        Start-Sleep -Seconds 3
+        
+        # Check for any remaining Millennium installer processes
+        $remainingProcesses = Get-Process | Where-Object { $_.Path -like "*Millennium*" } -ErrorAction SilentlyContinue
+        if ($remainingProcesses) {
+            Write-Host "        Waiting for installer to finish..." -ForegroundColor Yellow
+            $remainingProcesses | Wait-Process -Timeout 120 -ErrorAction SilentlyContinue
+        }
+        
         Remove-Item $installerPath -ErrorAction SilentlyContinue
         
         # Verify installation
