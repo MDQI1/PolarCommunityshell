@@ -372,26 +372,28 @@ Write-Host ""
 # ============================================
 Write-Host "  [9/9] Starting Steam & Enabling Plugin..." -ForegroundColor Yellow
 
-# Enable plugin by modifying Millennium settings file BEFORE launching Steam
-$millenniumSettingsPath = Join-Path $steamPath "ext\data\settings.json"
-if (Test-Path $millenniumSettingsPath) {
+# Enable plugin by modifying Millennium config file BEFORE launching Steam
+$millenniumConfigPath = Join-Path $steamPath "ext\config.json"
+if (Test-Path $millenniumConfigPath) {
     try {
-        $settings = Get-Content $millenniumSettingsPath -Raw | ConvertFrom-Json
+        $config = Get-Content $millenniumConfigPath -Raw | ConvertFrom-Json
         
-        # Initialize plugins array if not exists
-        if (-not $settings.PSObject.Properties['plugins']) {
-            $settings | Add-Member -NotePropertyName 'plugins' -NotePropertyValue @{} -Force
+        # Initialize plugins object if not exists
+        if (-not $config.PSObject.Properties['plugins']) {
+            $config | Add-Member -NotePropertyName 'plugins' -NotePropertyValue @{} -Force
         }
         
-        # Enable PolarTools plugin
-        $settings.plugins | Add-Member -NotePropertyName 'PolarTools' -NotePropertyValue $true -Force
+        # Enable plugin using the correct name from plugin.json ("PolarCommunity")
+        $config.plugins | Add-Member -NotePropertyName 'PolarCommunity' -NotePropertyValue $true -Force
         
-        # Save settings
-        $settings | ConvertTo-Json -Depth 10 | Set-Content $millenniumSettingsPath -Encoding UTF8
-        Write-Host "        Plugin enabled in settings!" -ForegroundColor Green
+        # Save config
+        $config | ConvertTo-Json -Depth 10 | Set-Content $millenniumConfigPath -Encoding UTF8
+        Write-Host "        Plugin enabled in config!" -ForegroundColor Green
     } catch {
-        Write-Host "        Could not modify settings file: $_" -ForegroundColor Yellow
+        Write-Host "        Could not modify config file: $_" -ForegroundColor Yellow
     }
+} else {
+    Write-Host "        Config file not found, will enable via URI..." -ForegroundColor Yellow
 }
 
 Write-Host "        Launching Steam..." -ForegroundColor DarkGray
@@ -400,13 +402,10 @@ Start-Process -FilePath $steamExePath -ArgumentList "-clearbeta -dev"
 Write-Host "        Waiting for Steam to load (15 seconds)..." -ForegroundColor DarkGray
 Start-Sleep -Seconds 15
 
-# Also try the URI method as backup
+# Also try the URI method as backup with correct plugin name
 Write-Host "        Enabling plugin via Millennium..." -ForegroundColor DarkGray
-Start-Process "steam://millennium/settings/plugins/enable/PolarTools" -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 3
-Start-Process "steam://millennium/settings/plugins/enable/polartools" -ErrorAction SilentlyContinue
-
-Start-Sleep -Seconds 8
+Start-Process "steam://millennium/settings/plugins/enable/PolarCommunity" -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 5
 
 Write-Host "        Restarting Steam..." -ForegroundColor DarkGray
 Get-Process -Name "steam*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
