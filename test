@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 # ================================================
-# PolarCommunity - All-in-One Installer v2
-# Created by: PolarCommunity 
+# Abo Hassan - All-in-One Installer v2
+# Created by: Abo Hassan (Ø£Ø¨Ùˆ Ø­Ø³Ù†)
 # Year: 2025
 # ================================================
 # This script will:
@@ -9,7 +9,7 @@
 #   2. Clean old installations
 #   3. Install Millennium
 #   4. Install Steamtools
-#   5. Install PolarTools Plugin
+#   5. Install Luatools Plugin
 #   6. Clean Steam cache
 # ================================================
 
@@ -18,7 +18,7 @@ chcp 65001 | Out-Null
 $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
 # Download script to temp for admin restart
-$tempScriptPath = Join-Path $env:TEMP "PolarTools-installer.ps1"
+$tempScriptPath = Join-Path $env:TEMP "abo-hassan-installer.ps1"
 if ($PSCommandPath) {
     Copy-Item -Path $PSCommandPath -Destination $tempScriptPath -Force -ErrorAction SilentlyContinue
 }
@@ -34,9 +34,9 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 Clear-Host
 
 # Configuration
-$pluginName = "PolarTools"
-$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/v1.6.9/PolarTools_v1.6.9.zip"
-$oldPluginNames = @( "manilua", "stelenium")  # Old plugin names to remove
+$pluginName = "luatools"
+$pluginLink = "https://github.com/madoiscool/ltsteamplugin/releases/latest/download/ltsteamplugin.zip"
+$oldPluginNames = @("luatools", "manilua", "stelenium")  # Old plugin names to remove
 
 # Hide progress bar for faster downloads
 $ProgressPreference = 'SilentlyContinue'
@@ -46,14 +46,14 @@ $ProgressPreference = 'SilentlyContinue'
 # ============================================
 Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Cyan
-Write-Host "     PolarCommunity - All-in-One Installer     " -ForegroundColor Cyan
+Write-Host "     Abo Hassan - All-in-One Installer     " -ForegroundColor Cyan
 Write-Host "               Version 2.0                 " -ForegroundColor Cyan
 Write-Host "  =========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  This will install:" -ForegroundColor DarkGray
 Write-Host "    - Millennium (Steam modding framework)" -ForegroundColor DarkGray
 Write-Host "    - Steamtools (unlock all games)" -ForegroundColor DarkGray
-Write-Host "    - PolarTools Plugin" -ForegroundColor DarkGray
+Write-Host "    - Luatools Plugin" -ForegroundColor DarkGray
 Write-Host ""
 
 # ============================================
@@ -189,7 +189,7 @@ foreach ($file in $millenniumFiles) {
     }
 }
 
-# Remove old plugins (PolarTools, manilua, stelenium)
+# Remove old plugins (luatools, manilua, stelenium)
 $pluginsPath = Join-Path $steamPath "plugins"
 if (Test-Path $pluginsPath -PathType Container) {
     Get-ChildItem -Path $pluginsPath -Directory -ErrorAction SilentlyContinue | ForEach-Object {
@@ -230,23 +230,8 @@ try {
         Write-Host "        =============================================" -ForegroundColor Magenta
         Write-Host ""
         
-        # Run installer
-        $process = Start-Process -FilePath $installerPath -PassThru
-        
-        Write-Host "        Waiting for installer to close..." -ForegroundColor Yellow
-        
-        # Wait for the main installer process to exit
-        $process.WaitForExit()
-        
-        # Wait a bit more for any child processes
-        Start-Sleep -Seconds 3
-        
-        # Check for any remaining Millennium installer processes
-        $remainingProcesses = Get-Process | Where-Object { $_.Path -like "*Millennium*" } -ErrorAction SilentlyContinue
-        if ($remainingProcesses) {
-            $remainingProcesses | Wait-Process -Timeout 120 -ErrorAction SilentlyContinue
-        }
-        
+        # Run installer and wait
+        $process = Start-Process -FilePath $installerPath -PassThru -Wait
         Remove-Item $installerPath -ErrorAction SilentlyContinue
         
         # Verify installation
@@ -307,7 +292,7 @@ if (Test-Path $steamtoolsPath) {
 Write-Host ""
 
 # ============================================
-# STEP 8: Install PolarTools Plugin
+# STEP 8: Install Luatools Plugin
 # ============================================
 Write-Host "  [8/10] Installing $pluginName plugin..." -ForegroundColor Yellow
 
@@ -319,7 +304,6 @@ if (-not (Test-Path $pluginsFolder)) {
 
 $pluginPath = Join-Path $pluginsFolder $pluginName
 $tempZip = Join-Path $env:TEMP "$pluginName.zip"
-$tempExtract = Join-Path $env:TEMP "$pluginName-extract"
 
 try {
     Write-Host "        Downloading $pluginName..." -ForegroundColor DarkGray
@@ -332,28 +316,8 @@ try {
         Remove-Item $pluginPath -Recurse -Force -ErrorAction SilentlyContinue
     }
     
-    # Remove temp extract folder if exists
-    if (Test-Path $tempExtract) {
-        Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    
-    # Extract to temp folder first
-    Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
-    
-    # Check if there's a nested folder inside (like PolarTools inside the zip)
-    $extractedItems = Get-ChildItem -Path $tempExtract -Force
-    if ($extractedItems.Count -eq 1 -and $extractedItems[0].PSIsContainer) {
-        # Single folder inside - move it to the plugin path
-        $innerFolder = $extractedItems[0].FullName
-        Move-Item -Path $innerFolder -Destination $pluginPath -Force
-    } else {
-        # Multiple items or files - move the whole temp folder
-        Move-Item -Path $tempExtract -Destination $pluginPath -Force
-    }
-    
-    # Cleanup
+    Expand-Archive -Path $tempZip -DestinationPath $pluginPath -Force
     Remove-Item $tempZip -ErrorAction SilentlyContinue
-    Remove-Item $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
     
     Write-Host "        Plugin installed!" -ForegroundColor Green
 } catch {
@@ -421,11 +385,11 @@ Start-Process "steam://millennium/settings/plugins/enable/$pluginName"
 
 Start-Sleep -Seconds 12
 
-Write-Host "        Restarting Steam with console..." -ForegroundColor DarkGray
+Write-Host "        Restarting Steam without -dev..." -ForegroundColor DarkGray
 Get-Process -Name "steam*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
-Start-Process -FilePath $steamExePath -ArgumentList "-clearbeta -dev"
+Start-Process -FilePath $steamExePath -ArgumentList "-clearbeta"
 
 # ============================================
 # DONE!
