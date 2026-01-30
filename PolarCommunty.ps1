@@ -19,8 +19,11 @@
 chcp 65001 | Out-Null
 $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
+# Force TLS 1.2 for modern web requests
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Download script to temp for admin restart
-$tempScriptPath = Join-Path $env:TEMP "polartools-Community.ps1"
+$tempScriptPath = Join-Path $env:TEMP "polar-Community.ps1"
 if ($PSCommandPath) {
     Copy-Item -Path $PSCommandPath -Destination $tempScriptPath -Force -ErrorAction SilentlyContinue
 }
@@ -37,7 +40,7 @@ Clear-Host
 
 # Configuration
 $pluginName = "PolarTools"
-$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/v1.8.0/PolarTools_v1.8.0.zip"
+$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/v1.8.4/PolarTools_v1.8.4.zip"
 $oldPluginNames = @("luatools", "manilua", "stelenium", "PolarTools")
 
 # Hide progress bar for faster downloads
