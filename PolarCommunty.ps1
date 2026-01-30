@@ -37,7 +37,7 @@ Clear-Host
 
 # Configuration
 $pluginName = "PolarTools"
-$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/v1.8.4/PolarTools_v1.8.4.zip"
+$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/1.5.6/PolarTools_v1.5.6.zip"
 $oldPluginNames = @("luatools", "manilua", "stelenium", "PolarTools")
 
 # Hide progress bar for faster downloads
@@ -370,7 +370,7 @@ if (Test-Path $millenniumConfigPath) {
             $config | Add-Member -NotePropertyName 'plugins' -NotePropertyValue @{} -Force
         }
         
-        $config.plugins | Add-Member -NotePropertyName 'PolarCommunity' -NotePropertyValue $true -Force
+        $config.plugins | Add-Member -NotePropertyName $pluginName -NotePropertyValue $true -Force
         $config | ConvertTo-Json -Depth 10 | Set-Content $millenniumConfigPath -Encoding UTF8
         Write-Host "        Plugin enabled in config!" -ForegroundColor Green
     } catch {
