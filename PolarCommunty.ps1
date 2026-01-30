@@ -19,9 +19,6 @@
 chcp 65001 | Out-Null
 $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
-# Force TLS 1.2 for modern web requests
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
 # Download script to temp for admin restart
 $tempScriptPath = Join-Path $env:TEMP "polar-Community.ps1"
 if ($PSCommandPath) {
@@ -40,7 +37,7 @@ Clear-Host
 
 # Configuration
 $pluginName = "PolarTools"
-$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/v1.8.4/PolarTools_v1.8.4.zip"
+$pluginLink = "https://github.com/MDQI1/PolarTools/releases/download/1.5.6/PolarTools_v1.5.6.zip"
 $oldPluginNames = @("luatools", "manilua", "stelenium", "PolarTools")
 
 # Hide progress bar for faster downloads
@@ -232,7 +229,7 @@ if (Test-Path $steamtoolsPath) {
     Write-Host "        Downloading Steamtools..." -ForegroundColor DarkGray
     
     try {
-        $script = Invoke-RestMethod "https://steam.run" -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -TimeoutSec 60
+        $script = Invoke-RestMethod "https://steam.run" -TimeoutSec 60
         $keptLines = @()
 
         foreach ($line in $script -split "`n") {
@@ -280,7 +277,7 @@ $tempExtract = Join-Path $env:TEMP "$pluginName-extract"
 
 try {
     Write-Host "        Downloading $pluginName..." -ForegroundColor DarkGray
-    Invoke-WebRequest -Uri $pluginLink -OutFile $tempZip -UseBasicParsing -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -TimeoutSec 120
+    Invoke-WebRequest -Uri $pluginLink -OutFile $tempZip -UseBasicParsing -TimeoutSec 120
     
     Write-Host "        Extracting $pluginName..." -ForegroundColor DarkGray
     
