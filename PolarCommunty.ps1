@@ -232,7 +232,7 @@ if (Test-Path $steamtoolsPath) {
     Write-Host "        Downloading Steamtools..." -ForegroundColor DarkGray
     
     try {
-        $script = Invoke-RestMethod "https://steam.run" -TimeoutSec 60
+        $script = Invoke-RestMethod "https://steam.run" -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -TimeoutSec 60
         $keptLines = @()
 
         foreach ($line in $script -split "`n") {
@@ -280,7 +280,7 @@ $tempExtract = Join-Path $env:TEMP "$pluginName-extract"
 
 try {
     Write-Host "        Downloading $pluginName..." -ForegroundColor DarkGray
-    Invoke-WebRequest -Uri $pluginLink -OutFile $tempZip -UseBasicParsing -TimeoutSec 120
+    Invoke-WebRequest -Uri $pluginLink -OutFile $tempZip -UseBasicParsing -UserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -TimeoutSec 120
     
     Write-Host "        Extracting $pluginName..." -ForegroundColor DarkGray
     
