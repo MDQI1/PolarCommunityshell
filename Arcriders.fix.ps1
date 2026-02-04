@@ -19,27 +19,34 @@ function Set-RegistryValue {
 }
 
 if ($edition -match "Pro" -or $edition -match "Enterprise" -or $edition -match "Education") {
-    Write-Host "Windows Pro/Enterprise detected. Applying strict settings..." -ForegroundColor Yellow
+    Write-Host "Windows Pro/Enterprise detected." -ForegroundColor Yellow
+    Write-Host "Applying Group Policy settings via Registry..." -ForegroundColor Yellow
     
-    # 1. Windows Update > Manage End user experience > Configure Automatic Updates = Disabled
-    # Registry: HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -> NoAutoUpdate = 1
+    # 1. Path: Windows Components > Windows Update > Manage End user experience
+    # Setting: Configure Automatic Updates = Disabled
+    # Registry Equivalent: NoAutoUpdate = 1
+    Write-Host "1. Disabling Automatic Updates (Manage End user experience)..."
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
 
-    # 2. Delivery Optimization > Download Mode = Bypass (100)
-    # Registry: HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization -> DODownloadMode = 100
+    # 2. Path: Windows Components > Delivery Optimization
+    # Setting: Download Mode = Bypass (100)
+    # Registry Equivalent: DODownloadMode = 100
+    Write-Host "2. Setting Delivery Optimization Download Mode to Bypass..."
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -Name "DODownloadMode" -Value 100
 
 } elseif ($edition -match "Home") {
-    Write-Host "Windows Home detected. Applying Windows Update settings..." -ForegroundColor Yellow
+    Write-Host "Windows Home detected." -ForegroundColor Yellow
     
-    # HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -> NoAutoUpdate = 1
+    # Home Edition usually doesn't have GP, so we use Registry directly as requested.
+    # Registry: HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU
+    # Value: NoAutoUpdate = 1
+    Write-Host "Applying Registry Fix for Home Edition..."
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
 
 } else {
-    Write-Host "Could not determine if Pro or Home. Applying standard Windows Update block (Safe Fallback)..." -ForegroundColor Magenta
-    # Fallback: Apply the Home fix as it is the most common request for blocking updates
+    Write-Host "Could not determine if Pro or Home. Applying safe fallback (Disable Auto Update)..." -ForegroundColor Magenta
     Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
 }
 
-Write-Host " Optimization Applied Successfully." -ForegroundColor Cyan
+Write-Host "Optimization Applied Successfully." -ForegroundColor Cyan
 pause
