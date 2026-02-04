@@ -3,41 +3,43 @@ $edition = (Get-CimInstance Win32_OperatingSystem).Caption
 
 Write-Host "Detected System: $edition" -ForegroundColor Cyan
 
-if ($edition -match "Pro" -or $edition -match "Enterprise") {
-    Write-Host "Windows Pro/Enterprise detected. Applying Delivery Optimization settings..." -ForegroundColor Yellow
-    
-    # Path for Delivery Optimization
-    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization"
-    
-    # Create the key if it doesn't exist
-    if (!(Test-Path $registryPath)) {
-        New-Item -Path $registryPath -Force | Out-Null
-        Write-Host "Created registry key: $registryPath" -ForegroundColor Green
+# Function to set registry value safely
+function Set-RegistryValue {
+    param (
+        [string]$Path,
+        [string]$Name,
+        [int]$Value
+    )
+    if (!(Test-Path $Path)) {
+        New-Item -Path $Path -Force | Out-Null
+        Write-Host "Created key: $Path" -ForegroundColor Green
     }
+    Set-ItemProperty -Path $Path -Name $Name -Value $Value -Type DWord
+    Write-Host "Set $Name = $Value at $Path" -ForegroundColor Green
+}
+
+if ($edition -match "Pro" -or $edition -match "Enterprise" -or $edition -match "Education") {
+    Write-Host "Windows Pro/Enterprise detected. Applying strict settings..." -ForegroundColor Yellow
     
-    # Set Download Mode to Bypass (100)
-    Set-ItemProperty -Path $registryPath -Name "DODownloadMode" -Value 100 -Type DWord
-    Write-Host "Success: Download Mode set to Bypass (100)." -ForegroundColor Green
+    # 1. Windows Update > Manage End user experience > Configure Automatic Updates = Disabled
+    # Registry: HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -> NoAutoUpdate = 1
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
+
+    # 2. Delivery Optimization > Download Mode = Bypass (100)
+    # Registry: HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization -> DODownloadMode = 100
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization" -Name "DODownloadMode" -Value 100
 
 } elseif ($edition -match "Home") {
     Write-Host "Windows Home detected. Applying Windows Update settings..." -ForegroundColor Yellow
     
-    # Path for Windows Update AU
-    $registryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"
-    
-    # Create the key if it doesn't exist (recursively creates WindowsUpdate if needed)
-    if (!(Test-Path $registryPath)) {
-        New-Item -Path $registryPath -Force | Out-Null
-        Write-Host "Created registry key: $registryPath" -ForegroundColor Green
-    }
-    
-    # Set NoAutoUpdate to 1
-    Set-ItemProperty -Path $registryPath -Name "NoAutoUpdate" -Value 1 -Type DWord
-    Write-Host "Success: NoAutoUpdate set to 1." -ForegroundColor Green
-    
+    # HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU -> NoAutoUpdate = 1
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
+
 } else {
-    Write-Host "Could not determine if Pro or Home, or edition not supported by this script." -ForegroundColor Red
+    Write-Host "Could not determine if Pro or Home. Applying standard Windows Update block (Safe Fallback)..." -ForegroundColor Magenta
+    # Fallback: Apply the Home fix as it is the most common request for blocking updates
+    Set-RegistryValue -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" -Name "NoAutoUpdate" -Value 1
 }
 
-Write-Host "Done." -ForegroundColor Cyan
+Write-Host " Optimization Applied Successfully." -ForegroundColor Cyan
 pause
