@@ -1,6 +1,3 @@
-# Abo-Hassan - Update PolarTools Script
-# Deletes old folder and downloads new version from GitHub
-
 $pluginPath = "C:\Program Files (x86)\Steam\plugins\PolarTools"
 $downloadUrl = "https://github.com/MDQI1/PolarTools/releases/download/v1.8.6/PolarTools_v1.8.6.zip"
 $tempZip = "$env:TEMP\PolarTools_v1.8.6.zip"
