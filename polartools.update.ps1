@@ -7,7 +7,7 @@ $tempZip = "$env:TEMP\PolarTools_v1.8.6.zip"
 $pluginsFolder = "C:\Program Files (x86)\Steam\plugins"
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "   Abo-Hassan - PolarTools Updater" -ForegroundColor Cyan
+Write-Host "   PolarTools Updater" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -34,7 +34,7 @@ if (-not (Test-Path $pluginsFolder)) {
 }
 
 # Download file from GitHub
-Write-Host "[*] Downloading PolarTools from GitHub..." -ForegroundColor Yellow
+Write-Host "[*] Downloading PolarTools" -ForegroundColor Yellow
 try {
     Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
     Write-Host "[+] Download completed successfully!" -ForegroundColor Green
