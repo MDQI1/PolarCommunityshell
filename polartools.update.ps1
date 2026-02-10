@@ -1,5 +1,5 @@
 # Abo-Hassan - Update PolarTools Script
-# يحذف المجلد القديم وينزل النسخة الجديدة من GitHub
+# Deletes old folder and downloads new version from GitHub
 
 $pluginPath = "C:\Program Files (x86)\Steam\plugins\PolarTools"
 $downloadUrl = "https://github.com/MDQI1/PolarTools/releases/download/v1.8.6/PolarTools_v1.8.6.zip"
@@ -11,58 +11,58 @@ Write-Host "   Abo-Hassan - PolarTools Updater" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# حذف المجلد القديم
+# Delete old folder
 if (Test-Path $pluginPath) {
-    Write-Host "[*] جاري حذف PolarTools القديم..." -ForegroundColor Yellow
+    Write-Host "[*] Deleting old PolarTools..." -ForegroundColor Yellow
     try {
         Remove-Item -Path $pluginPath -Recurse -Force
-        Write-Host "[+] تم حذف المجلد القديم بنجاح!" -ForegroundColor Green
+        Write-Host "[+] Old folder deleted successfully!" -ForegroundColor Green
     }
     catch {
-        Write-Host "[!] فشل حذف المجلد: $_" -ForegroundColor Red
+        Write-Host "[!] Failed to delete folder: $_" -ForegroundColor Red
         exit 1
     }
 } else {
-    Write-Host "[*] المجلد غير موجود، سيتم التنزيل مباشرة..." -ForegroundColor Yellow
+    Write-Host "[*] Folder not found, proceeding to download..." -ForegroundColor Yellow
 }
 
 Write-Host ""
 
-# إنشاء مجلد plugins إذا لم يكن موجوداً
+# Create plugins folder if it doesn't exist
 if (-not (Test-Path $pluginsFolder)) {
     New-Item -Path $pluginsFolder -ItemType Directory -Force | Out-Null
 }
 
-# تنزيل الملف من GitHub
-Write-Host "[*] جاري تنزيل PolarTools من GitHub..." -ForegroundColor Yellow
+# Download file from GitHub
+Write-Host "[*] Downloading PolarTools from GitHub..." -ForegroundColor Yellow
 try {
     Invoke-WebRequest -Uri $downloadUrl -OutFile $tempZip -UseBasicParsing
-    Write-Host "[+] تم التنزيل بنجاح!" -ForegroundColor Green
+    Write-Host "[+] Download completed successfully!" -ForegroundColor Green
 }
 catch {
-    Write-Host "[!] فشل التنزيل: $_" -ForegroundColor Red
+    Write-Host "[!] Download failed: $_" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 
-# فك ضغط الملف
-Write-Host "[*] جاري فك الضغط..." -ForegroundColor Yellow
+# Extract the file
+Write-Host "[*] Extracting files..." -ForegroundColor Yellow
 try {
     Expand-Archive -Path $tempZip -DestinationPath $pluginsFolder -Force
-    Write-Host "[+] تم فك الضغط بنجاح!" -ForegroundColor Green
+    Write-Host "[+] Extraction completed successfully!" -ForegroundColor Green
 }
 catch {
-    Write-Host "[!] فشل فك الضغط: $_" -ForegroundColor Red
+    Write-Host "[!] Extraction failed: $_" -ForegroundColor Red
     exit 1
 }
 
-# حذف ملف الـ ZIP المؤقت
+# Delete temporary ZIP file
 Remove-Item -Path $tempZip -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "   تم تحديث PolarTools بنجاح!" -ForegroundColor Green
+Write-Host "   PolarTools updated successfully!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 
