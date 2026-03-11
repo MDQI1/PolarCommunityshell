@@ -161,6 +161,7 @@ Write-Host "  [5/9] Cleaning old installations..." -ForegroundColor Yellow
 # Remove old Steamtools files
 $steamtoolsFiles = @(
     (Join-Path $steamPath "hid.dll"),
+    (Join-Path $steamPath "dwmapi.dll"),
     (Join-Path $steamPath "xinput1_4.dll")
 )
 
@@ -220,7 +221,7 @@ Write-Host ""
 # STEP 6: Install Steamtools
 # ============================================
 Write-Host "  [6/9] Installing Steamtools..." -ForegroundColor Yellow -NoNewline
-$steamtoolsPath = Join-Path $steamPath "xinput1_4.dll"
+$steamtoolsPath = Join-Path $steamPath "dwmapi.dll"
 
 if (Test-Path $steamtoolsPath) {
     Write-Host " Already installed" -ForegroundColor Green
@@ -229,26 +230,19 @@ if (Test-Path $steamtoolsPath) {
     Write-Host "        Downloading Steamtools..." -ForegroundColor DarkGray
     
     try {
-        $script = Invoke-RestMethod "https://steam.run" -TimeoutSec 60
-        $keptLines = @()
-
-        foreach ($line in $script -split "`n") {
-            $conditions = @(
-                ($line -imatch "Start-Process" -and $line -imatch "steam"),
-                ($line -imatch "steam\.exe"),
-                ($line -imatch "Start-Sleep" -or $line -imatch "Write-Host"),
-                ($line -imatch "cls" -or $line -imatch "exit"),
-                ($line -imatch "Stop-Process" -and -not ($line -imatch "Get-Process"))
-            )
-            
-            if (-not($conditions -contains $true)) {
-                $keptLines += $line
-            }
+        $downloadHidDll = "https://update.aaasn.com/dwmapi.dll"
+        Invoke-RestMethod -Uri $downloadHidDll -OutFile $steamtoolsPath -ErrorAction Stop
+        
+        $steamToolsRegPath = 'HKCU:\Software\Valve\Steamtools'
+        if (!(Test-Path $steamToolsRegPath)) {
+            New-Item -Path $steamToolsRegPath -Force | Out-Null
         }
-
-        $SteamtoolsScript = $keptLines -join "`n"
-        Invoke-Expression $SteamtoolsScript *> $null
-
+        
+        Remove-ItemProperty -Path $steamToolsRegPath -Name "ActivateUnlockMode" -ErrorAction SilentlyContinue
+        Remove-ItemProperty -Path $steamToolsRegPath -Name "AlwaysStayUnlocked" -ErrorAction SilentlyContinue
+        Remove-ItemProperty -Path $steamToolsRegPath -Name "notUnlockDepot" -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $steamToolsRegPath -Name "iscdkey" -Value "true" -Type String
+        
         if (Test-Path $steamtoolsPath) {
             Write-Host "        Steamtools installed!" -ForegroundColor Green
         } else {
